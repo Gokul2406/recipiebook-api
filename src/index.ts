@@ -1,21 +1,33 @@
 import "reflect-metadata";
 import {createConnection} from "typeorm";
-import {User} from "./entity/User";
+import path from "path"
+import express, {Request, Response} from "express"
+import { Users } from "./entity/User";
+require("dotenv").config()
+const bodyParser = require("body-parser")
 
-createConnection().then(async connection => {
+const main = async() => {
+    const app = express()
+    app.use(bodyParser())
+    createConnection().then(() => {
+        console.log("Everything okay with orm")
+    })
+    app.get('/', (req: Request, res: Response) => {
+        res.send("Hello")
+    })
 
-    console.log("Inserting a new user into the database...");
-    const user = new User();
-    user.firstName = "Timber";
-    user.lastName = "Saw";
-    user.age = 25;
-    await connection.manager.save(user);
-    console.log("Saved a new user with id: " + user.id);
+    app.get('/api/users/all', async(req: Request, res: Response) => {
+        const users = await Users.find()
+        console.log(users)
+        res.send("Hello")
+    })
 
-    console.log("Loading users from the database...");
-    const users = await connection.manager.find(User);
-    console.log("Loaded users: ", users);
-
-    console.log("Here you can setup and run express/koa/any other framework.");
-
-}).catch(error => console.log(error));
+    app.post('/api/users/create', async(req: Request, res: Response) => {
+        res.json(req.body)
+    })
+    app.get('/api/users/create', async(req: Request, res: Response) => {
+       res.send("create user") 
+    })
+    app.listen(process.env.EXPRESS_PORT, () => console.log("Server started at port 4000"))
+}
+main()
