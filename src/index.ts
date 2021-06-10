@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import jwt from "jsonwebtoken"
 import { createConnection } from "typeorm";
 import path from "path";
 import argon2 from "argon2";
@@ -33,17 +34,20 @@ const main = async () => {
       password: hashedPassword,
       email: email,
     }).save();
+    const accessToken = jwt.sign({userId: user.id}, process.env.JWT_SECRET_KEY)
+    console.log(accessToken)
     if (user) {
-      if (req.session) {
-        req.session.userId = user.id;
-      }
-      console.log(req.session)
-     res.json({ success: true});
+     res.json({ success: true, accessToken: accessToken});
     } else {
       res.json(false);
     }
   });
 	
+  app.get('/api/feed', async(req: Request, res: Response) => {
+	  console.log(req.headers)
+	  res.send("feed")
+  })
+
   app.post('/api/users/login', async(req: Request, res: Response) => {
 	  console.log(req.body)
 	//const { username, password } = req.body.data
