@@ -1,20 +1,24 @@
 import "reflect-metadata";
 import jwt from "jsonwebtoken"
 import { createConnection } from "typeorm";
-import path from "path";
 import argon2 from "argon2";
 import express, { Request, Response } from "express";
 import { Users } from "./entity/User";
+import Post from "./entity/Post";
 require("dotenv").config();
 const bodyParser = require("body-parser");
 import cors from "cors";
 const main = async () => {
   const app = express();
-  app.use(cors());
+  app.use(cors({origin: "http://localhost:3000"}));
   app.use(bodyParser());
-  createConnection().then(() => {
-    console.log("Everything okay with orm");
-  });
+  app.use(function (request, response, next) {
+  response.header("Access-Control-Allow-Origin", "*");
+  response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
+  await createConnection().then(() => console.log("Started ORM"))
   app.get("/", (req: Request, res: Response) => {
     res.send("Hello");
   });
@@ -43,9 +47,20 @@ const main = async () => {
     }
   });
 	
-  app.get('/api/feed', async(req: Request, res: Response) => {
-	  console.log(req.headers)
-	  res.send("feed")
+  app.post('/api/feed', async(req: Request, res: Response) => {
+	if ('token' in req.body.data) {
+		const { token } = req.body.data
+		const verified = jwt.verify(token, process.env.JWT_SECRET_KEY)
+		console.log(verified)
+		if (verified) {
+			res.send("feed")
+		} else {
+			res.sendStatus(401)
+		}
+	} else {
+		res.sendStatus(403)
+	}
+
   })
 
   app.post('/api/users/login', async(req: Request, res: Response) => {
