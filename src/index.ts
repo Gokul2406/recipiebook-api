@@ -50,13 +50,17 @@ const main = async () => {
   app.post('/api/feed', async(req: Request, res: Response) => {
 	if ('token' in req.body.data) {
 		const { token } = req.body.data
+		try {
 		const verified = jwt.verify(token, process.env.JWT_SECRET_KEY)
 		console.log(verified)
 		if (verified) {
 			res.send("feed")
-		} else {
+		} 
+		} catch(err) {
+			console.log(err)	
+			console.log("Error")	
 			res.sendStatus(401)
-		}
+		}	
 	} else {
 		res.sendStatus(403)
 	}
@@ -65,7 +69,6 @@ const main = async () => {
 
   app.post('/api/users/login', async(req: Request, res: Response) => {
 	  console.log(req.body)
-	//const { username, password } = req.body.data
 	const username = req.body.data.username;
 	console.log(username)
 	const password = req.body.data.psd	
@@ -77,7 +80,8 @@ const main = async () => {
 	if (!valid) {
 		res.send({err: true, errMsg: "Invalid password"})
 	}
-	res.send({loggedIn: true, user: user.username})
+  const refreshToken = jwt.sign({userId: user.id}, process.env.JWT_SECRET_KEY)
+	res.send({loggedIn: true, user: user.username, refreshToken: refreshToken})
   })
 
   app.get("/api/users/create", async (req: Request, res: Response) => {
