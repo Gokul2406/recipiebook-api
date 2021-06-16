@@ -19,11 +19,26 @@ const main = async () => {
 });
 
   await createConnection().then(() => console.log("Started ORM"))
-  app.get("/", (req: Request, res: Response) => {
+  app.get("/", (_, res: Response) => {
     res.send("Hello");
   });
 
-  app.get("/api/users/all", async (req: Request, res: Response) => {
+  app.post("/api/recipie/create", async(req: Request, res: Response) => {
+    console.log(req.body)
+    const { title, ingredients, preparation, token } = req.body.data
+    try {
+      const decodedJwt: any = await jwt.decode(token)
+      const username = await Users.findOne({id: decodedJwt.userId})
+    const recipie = await Post.create({uploadedBy: username.username, title: title, ingredient: ingredients, preparation: preparation}).save()
+      console.log(recipie)
+      res.send({status: "Success"})
+    } catch(err) {
+      console.log(err)
+      res.send({status: `failed due to ${err}`})
+    }
+  })
+
+  app.get("/api/users/all", async (_, res: Response) => {
     const users = await Users.find();
     console.log(users);
     res.send("Hello");
@@ -49,12 +64,13 @@ const main = async () => {
 	
   app.post('/api/feed', async(req: Request, res: Response) => {
 	if ('token' in req.body.data) {
+    const posts = await Post.find()
 		const { token } = req.body.data
 		try {
 		const verified = jwt.verify(token, process.env.JWT_SECRET_KEY)
 		console.log(verified)
 		if (verified) {
-			res.send("feed")
+			res.send({post: posts})
 		} 
 		} catch(err) {
 			console.log(err)	
@@ -68,7 +84,7 @@ const main = async () => {
   })
 
   app.post('/api/users/login', async(req: Request, res: Response) => {
-	  console.log(req.body)
+	console.log(req.body)
 	const username = req.body.data.username;
 	console.log(username)
 	const password = req.body.data.psd	

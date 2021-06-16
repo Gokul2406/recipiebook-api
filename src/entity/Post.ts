@@ -19,4 +19,7 @@ export default class Post extends BaseEntity {
 
 	@Column()
 	uploadedBy: string;
+
+	@Column()
+	title: string;
 }
